@@ -262,4 +262,97 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initAll);
 } else {
     initAll();
-} 
+}
+
+// ====== 动态科技极简风点阵连线背景 ======
+(function () {
+    const canvas = document.getElementById('tech-bg');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    let dpr = window.devicePixelRatio || 1;
+    let points = [];
+    const POINT_NUM = Math.floor((width * height) / 6000); // 点的数量随屏幕自适应
+    const LINE_DIST = 140; // 连线最大距离
+    const MOVE_SPEED = 0.3;
+
+    function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        dpr = window.devicePixelRatio || 1;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(dpr, dpr);
+    }
+
+    function randomPoint() {
+        return {
+            x: Math.random() * width,
+            y: Math.random() * height,
+            vx: (Math.random() - 0.5) * MOVE_SPEED,
+            vy: (Math.random() - 0.5) * MOVE_SPEED
+        };
+    }
+
+    function initPoints() {
+        points = [];
+        for (let i = 0; i < POINT_NUM; i++) {
+            points.push(randomPoint());
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, width, height);
+        // 画点
+        ctx.fillStyle = 'rgba(0, 180, 255, 0.8)';
+        points.forEach(p => {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        // 画线
+        for (let i = 0; i < points.length; i++) {
+            for (let j = i + 1; j < points.length; j++) {
+                const p1 = points[i], p2 = points[j];
+                const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+                if (dist < LINE_DIST) {
+                    ctx.strokeStyle = `rgba(0,180,255,${1 - dist / LINE_DIST})`;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(p1.x, p1.y);
+                    ctx.lineTo(p2.x, p2.y);
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+
+    function update() {
+        points.forEach(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            if (p.x < 0 || p.x > width) p.vx *= -1;
+            if (p.y < 0 || p.y > height) p.vy *= -1;
+        });
+    }
+
+    function animate() {
+        update();
+        draw();
+        requestAnimationFrame(animate);
+    }
+
+    function reset() {
+        resize();
+        initPoints();
+    }
+
+    window.addEventListener('resize', reset);
+    reset();
+    animate();
+})();
+// ====== 动态背景代码结束 ====== 

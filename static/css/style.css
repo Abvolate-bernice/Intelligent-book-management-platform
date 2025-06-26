@@ -1,6 +1,9 @@
 /* 自定义样式 */
 body {
-    background-color: #f8f9fa;
+    /* background-color: #f8f9fa; 移除原背景色，交由canvas动态背景实现 */
+    position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
 }
 
 .navbar-brand {
@@ -287,5 +290,63 @@ body {
 @media (max-width: 768px) {
     .card-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+/* 首页高端科技感主板块样式 */
+.tech-hero-card {
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18), 0 1.5px 8px 0 rgba(0, 180, 255, 0.10);
+    border-radius: 1.5rem;
+    border: 1.5px solid rgba(0, 180, 255, 0.18);
+    backdrop-filter: blur(8px);
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.3s;
+}
+
+.tech-hero-card::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    left: -40%;
+    width: 180%;
+    height: 180%;
+    background: radial-gradient(circle at 60% 40%, rgba(0, 180, 255, 0.10) 0%, rgba(0, 180, 255, 0.03) 80%, transparent 100%);
+    z-index: 0;
+}
+
+.tech-hero-card .display-4 {
+    font-weight: 800;
+    letter-spacing: 2px;
+    background: linear-gradient(90deg, #00b4ff 30%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.tech-hero-card h5 {
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.tech-hero-card ul li {
+    font-size: 1.08rem;
+    margin-bottom: 0.5rem;
+    padding-left: 0.2rem;
+}
+
+.tech-hero-card .btn-primary {
+    box-shadow: 0 4px 16px 0 rgba(0, 180, 255, 0.18);
+    font-size: 1.15rem;
+    padding: 0.8rem 2.5rem;
+    border-radius: 2rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+@media (max-width: 768px) {
+    .tech-hero-card {
+        padding: 2rem 1rem !important;
     }
 }
