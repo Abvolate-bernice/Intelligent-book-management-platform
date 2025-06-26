@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}借阅管理 - 智能图书管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-exchange-alt text-primary me-2"></i>借阅管理
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>借阅记录
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if borrows %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-sortable">
+                        <thead>
+                            <tr>
+                                <th data-sort="borrow_id">借阅ID</th>
+                                <th data-sort="book_title">图书信息</th>
+                                <th data-sort="student_name">学生信息</th>
+                                <th data-sort="borrow_date">借阅日期</th>
+                                <th data-sort="due_date">应还日期</th>
+                                <th data-sort="status">状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for borrow in borrows %}
+                            <tr>
+                                <td data-borrow_id="{{ borrow.borrow_id }}">{{ borrow.borrow_id }}</td>
+                                <td data-book_title="{{ borrow.book.title }}">
+                                    <strong>{{ borrow.book.title }}</strong><br>
+                                    <small class="text-muted">{{ borrow.book.author }} | {{ borrow.book.isbn }}</small>
+                                </td>
+                                <td data-student_name="{{ borrow.student.name }}">
+                                    <strong>{{ borrow.student.name }}</strong><br>
+                                    <small class="text-muted">{{ borrow.student.student_id }} | {{
+                                        borrow.student.department }}</small>
+                                </td>
+                                <td data-borrow_date="{{ borrow.borrow_date.strftime('%Y-%m-%d') }}">
+                                    {{ borrow.borrow_date.strftime('%Y-%m-%d') }}
+                                </td>
+                                <td data-due_date="{{ borrow.due_date.strftime('%Y-%m-%d') }}">
+                                    <span class="{{ 'text-danger' if borrow.due_date < today else '' }}">
+                                        {{ borrow.due_date.strftime('%Y-%m-%d') }}
+                                    </span>
+                                </td>
+                                <td data-status="{{ borrow.status }}">
+                                    {% if borrow.status == '借出' %}
+                                    {% if borrow.due_date < today %} <span class="badge bg-danger">逾期</span>
+                                        {% else %}
+                                        <span class="badge bg-success">借出</span>
+                                        {% endif %}
+                                        {% elif borrow.status == '已还' %}
+                                        <span class="badge bg-info">已还</span>
+                                        {% elif borrow.status == '遗失' %}
+                                        <span class="badge bg-warning">遗失</span>
+                                        {% endif %}
+                                </td>
+                                <td>
+                                    {% if borrow.status == '借出' %}
+                                    <button class="btn btn-success btn-sm" onclick="returnBook({{ borrow.borrow_id }})">
+                                        <i class="fas fa-undo me-1"></i>归还
+                                    </button>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">暂无借阅记录</h5>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function returnBook(borrowId) {
+        if (confirm('确定要归还这本书吗？')) {
+            fetch(`/admin/return/${borrowId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('归还成功！');
+                        location.reload();
+                    } else {
+                        alert('归还失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('归还失败，请稍后重试');
+                });
+        }
+    }
+</script>
+{% endblock %}

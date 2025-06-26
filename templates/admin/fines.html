@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}罚款管理 - 智能图书管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-exclamation-triangle text-primary me-2"></i>罚款管理
+            </h2>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFineModal">
+                <i class="fas fa-plus me-1"></i>添加罚款
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>罚款记录
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if fines %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-sortable">
+                        <thead>
+                            <tr>
+                                <th data-sort="fine_id">罚款ID</th>
+                                <th data-sort="student_name">学生信息</th>
+                                <th data-sort="amount">金额</th>
+                                <th data-sort="reason">原因</th>
+                                <th data-sort="payment_status">状态</th>
+                                <th data-sort="created_date">创建日期</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for fine in fines %}
+                            <tr>
+                                <td data-fine_id="{{ fine.fine_id }}">{{ fine.fine_id }}</td>
+                                <td data-student_name="{{ fine.student.name }}">
+                                    <strong>{{ fine.student.name }}</strong><br>
+                                    <small class="text-muted">{{ fine.student.student_id }} | {{ fine.student.department
+                                        }}</small>
+                                </td>
+                                <td data-amount="{{ fine.amount }}">
+                                    <strong class="text-danger">¥{{ "%.2f"|format(fine.amount) }}</strong>
+                                </td>
+                                <td data-reason="{{ fine.reason }}">
+                                    {{ fine.reason or '未说明' }}
+                                </td>
+                                <td data-payment_status="{{ fine.payment_status }}">
+                                    {% if fine.payment_status == '未缴纳' %}
+                                    <span class="badge bg-danger">未缴纳</span>
+                                    {% elif fine.payment_status == '已缴纳' %}
+                                    <span class="badge bg-success">已缴纳</span>
+                                    {% elif fine.payment_status == '部分缴纳' %}
+                                    <span class="badge bg-warning">部分缴纳</span>
+                                    {% endif %}
+                                </td>
+                                <td data-created_date="{{ fine.created_date.strftime('%Y-%m-%d %H:%M') }}">
+                                    {{ fine.created_date.strftime('%Y-%m-%d %H:%M') }}
+                                </td>
+                                <td>
+                                    {% if fine.payment_status != '已缴纳' %}
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-success btn-sm"
+                                            onclick="updateFineStatus({{ fine.fine_id }}, '已缴纳')">
+                                            <i class="fas fa-check me-1"></i>已缴
+                                        </button>
+                                        <button class="btn btn-warning btn-sm"
+                                            onclick="updateFineStatus({{ fine.fine_id }}, '部分缴纳')">
+                                            <i class="fas fa-minus me-1"></i>部分
+                                        </button>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-success">已处理</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-exclamation-triangle fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">暂无罚款记录</h5>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 统计信息 -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ fines|selectattr('payment_status', 'equalto', '未缴纳')|list|length }}
+                        </h4>
+                        <p class="card-text">未缴纳</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ fines|selectattr('payment_status', 'equalto', '已缴纳')|list|length }}
+                        </h4>
+                        <p class="card-text">已缴纳</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ fines|selectattr('payment_status', 'equalto', '部分缴纳')|list|length }}
+                        </h4>
+                        <p class="card-text">部分缴纳</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-minus-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">¥{{ "%.2f"|format(fines|sum(attribute='amount')) }}</h4>
+                        <p class="card-text">总金额</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-yen-sign fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加罚款模态框 -->
+<div class="modal fade" id="addFineModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('admin_add_fine') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加罚款记录</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="student_id" class="form-label">学生 <span class="text-danger">*</span></label>
+                        <select class="form-select" id="student_id" name="student_id" required>
+                            <option value="">请选择学生</option>
+                            {% for student in students %}
+                            <option value="{{ student.student_id }}">
+                                {{ student.name }} ({{ student.student_id }}) - {{ student.department }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">罚款金额 <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0"
+                            required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">罚款原因</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3"
+                            placeholder="请输入罚款原因..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function updateFineStatus(fineId, newStatus) {
+        var statusText = newStatus === '已缴纳' ? '已缴纳' : newStatus === '部分缴纳' ? '部分缴纳' : '未缴纳';
+
+        if (confirm(`确定要将罚款状态更新为"${statusText}"吗？`)) {
+            fetch(`/admin/fine/${fineId}/status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    status: newStatus
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('状态更新成功！');
+                        location.reload();
+                    } else {
+                        alert('更新失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('更新失败，请稍后重试');
+                });
+        }
+    }
+</script>
+{% endblock %}

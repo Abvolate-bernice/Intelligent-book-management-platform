@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}评价管理 - 智能图书管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-star text-primary me-2"></i>评价管理
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>评价记录
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if reviews %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-sortable">
+                        <thead>
+                            <tr>
+                                <th data-sort="review_id">评价ID</th>
+                                <th data-sort="book_title">图书信息</th>
+                                <th data-sort="student_name">学生信息</th>
+                                <th data-sort="rating">评分</th>
+                                <th data-sort="review_time">评价时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for review in reviews %}
+                            <tr>
+                                <td data-review_id="{{ review.review_id }}">{{ review.review_id }}</td>
+                                <td data-book_title="{{ review.book.title }}">
+                                    <strong>{{ review.book.title }}</strong><br>
+                                    <small class="text-muted">{{ review.book.author }} | {{ review.book.isbn }}</small>
+                                </td>
+                                <td data-student_name="{{ review.student.name }}">
+                                    <strong>{{ review.student.name }}</strong><br>
+                                    <small class="text-muted">{{ review.student.student_id }} | {{
+                                        review.student.department }}</small>
+                                </td>
+                                <td data-rating="{{ review.rating }}">
+                                    <div class="d-flex align-items-center">
+                                        {% for i in range(5) %}
+                                        <i
+                                            class="fas fa-star text-{{ 'warning' if i < review.rating else 'muted' }} me-1"></i>
+                                        {% endfor %}
+                                        <span class="ms-2">{{ review.rating }}/5</span>
+                                    </div>
+                                </td>
+                                <td data-review_time="{{ review.review_time.strftime('%Y-%m-%d %H:%M') }}">
+                                    {{ review.review_time.strftime('%Y-%m-%d %H:%M') }}
+                                </td>
+                                <td>
+                                    <button class="btn btn-outline-primary btn-sm"
+                                        onclick="viewReview({{ review.review_id }})">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm"
+                                        onclick="deleteReview({{ review.review_id }})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">暂无评价记录</h5>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 统计信息 -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ reviews|selectattr('rating', 'equalto', 5)|list|length }}</h4>
+                        <p class="card-text">5星评价</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-star fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ reviews|selectattr('rating', 'equalto', 4)|list|length }}</h4>
+                        <p class="card-text">4星评价</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-star fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ reviews|selectattr('rating', 'equalto', 3)|list|length }}</h4>
+                        <p class="card-text">3星评价</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-star fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ (reviews|selectattr('rating', 'equalto', 1)|list|length) +
+                            (reviews|selectattr('rating', 'equalto', 2)|list|length) }}</h4>
+                        <p class="card-text">低分评价</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-star fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 评价详情模态框 -->
+<div class="modal fade" id="reviewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">评价详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="reviewModalBody">
+                <!-- 评价详情内容将通过JavaScript动态加载 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function viewReview(reviewId) {
+        // 这里可以通过AJAX获取评价详情，或者直接显示当前页面的评价信息
+        // 为了简化，我们直接显示一个提示
+        alert('评价详情功能开发中...');
+    }
+
+    function deleteReview(reviewId) {
+        if (confirm('确定要删除这个评价吗？此操作不可恢复！')) {
+            fetch(`/admin/review/${reviewId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('删除成功！');
+                        location.reload();
+                    } else {
+                        alert('删除失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('删除失败，请稍后重试');
+                });
+        }
+    }
+</script>
+{% endblock %}

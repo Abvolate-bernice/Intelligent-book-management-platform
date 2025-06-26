@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}预约管理 - 智能图书管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-clock text-primary me-2"></i>预约管理
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>预约记录
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if reservations %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-sortable">
+                        <thead>
+                            <tr>
+                                <th data-sort="reservation_id">预约ID</th>
+                                <th data-sort="book_title">图书信息</th>
+                                <th data-sort="student_name">学生信息</th>
+                                <th data-sort="reservation_date">预约时间</th>
+                                <th data-sort="status">状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reservation in reservations %}
+                            <tr>
+                                <td data-reservation_id="{{ reservation.reservation_id }}">{{ reservation.reservation_id
+                                    }}</td>
+                                <td data-book_title="{{ reservation.book.title }}">
+                                    <strong>{{ reservation.book.title }}</strong><br>
+                                    <small class="text-muted">{{ reservation.book.author }} | {{ reservation.book.isbn
+                                        }}</small><br>
+                                    <small class="text-info">可借：{{ reservation.book.available_copies }}/{{
+                                        reservation.book.total_copies }}</small>
+                                </td>
+                                <td data-student_name="{{ reservation.student.name }}">
+                                    <strong>{{ reservation.student.name }}</strong><br>
+                                    <small class="text-muted">{{ reservation.student.student_id }} | {{
+                                        reservation.student.department }}</small>
+                                </td>
+                                <td
+                                    data-reservation_date="{{ reservation.reservation_date.strftime('%Y-%m-%d %H:%M') }}">
+                                    {{ reservation.reservation_date.strftime('%Y-%m-%d %H:%M') }}
+                                </td>
+                                <td data-status="{{ reservation.status }}">
+                                    {% if reservation.status == '等待' %}
+                                    <span class="badge bg-warning">等待</span>
+                                    {% elif reservation.status == '可取' %}
+                                    <span class="badge bg-success">可取</span>
+                                    {% elif reservation.status == '取消' %}
+                                    <span class="badge bg-secondary">取消</span>
+                                    {% elif reservation.status == '过期' %}
+                                    <span class="badge bg-danger">过期</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if reservation.status == '等待' %}
+                                    {% if reservation.book.available_copies > 0 %}
+                                    <button class="btn btn-success btn-sm"
+                                        onclick="approveReservation({{ reservation.reservation_id }})">
+                                        <i class="fas fa-check me-1"></i>审批
+                                    </button>
+                                    {% else %}
+                                    <span class="text-muted">无库存</span>
+                                    {% endif %}
+                                    <button class="btn btn-danger btn-sm"
+                                        onclick="cancelReservation({{ reservation.reservation_id }})">
+                                        <i class="fas fa-times me-1"></i>取消
+                                    </button>
+                                    {% elif reservation.status == '可取' %}
+                                    <span class="text-success">已审批</span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">暂无预约记录</h5>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 统计信息 -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ reservations|selectattr('status', 'equalto', '等待')|list|length }}</h4>
+                        <p class="card-text">等待审批</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ reservations|selectattr('status', 'equalto', '可取')|list|length }}</h4>
+                        <p class="card-text">可取的</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-secondary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ reservations|selectattr('status', 'equalto', '取消')|list|length }}</h4>
+                        <p class="card-text">已取消</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-times-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ reservations|selectattr('status', 'equalto', '过期')|list|length }}</h4>
+                        <p class="card-text">已过期</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function approveReservation(reservationId) {
+        if (confirm('确定要审批这个预约吗？')) {
+            fetch(`/admin/reservation/${reservationId}/approve`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('审批成功！');
+                        location.reload();
+                    } else {
+                        alert('审批失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('审批失败，请稍后重试');
+                });
+        }
+    }
+
+    function cancelReservation(reservationId) {
+        if (confirm('确定要取消这个预约吗？')) {
+            fetch(`/admin/reservation/${reservationId}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('取消成功！');
+                        location.reload();
+                    } else {
+                        alert('取消失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('取消失败，请稍后重试');
+                });
+        }
+    }
+</script>
+{% endblock %}

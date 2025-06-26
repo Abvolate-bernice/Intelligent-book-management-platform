@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+
+{% block title %}学生详情 - 智能图书管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-user-graduate text-primary me-2"></i>学生详情
+            </h2>
+            <div class="btn-group">
+                <button class="btn btn-{{ 'success' if student.account_status == '冻结' else 'danger' }}"
+                    onclick="toggleStudentStatus('{{ student.student_id }}', '{{ student.account_status }}')">
+                    <i class="fas fa-{{ 'unlock' if student.account_status == '冻结' else 'lock' }} me-1"></i>
+                    {{ '解冻' if student.account_status == '冻结' else '冻结' }}
+                </button>
+                <a href="{{ url_for('admin_students') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>返回
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 学生基本信息 -->
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>基本信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>学号：</strong></td>
+                                <td>{{ student.student_id }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>姓名：</strong></td>
+                                <td>{{ student.name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>性别：</strong></td>
+                                <td>{{ student.gender or '未设置' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>院系：</strong></td>
+                                <td>{{ student.department or '未设置' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>专业：</strong></td>
+                                <td>{{ student.major or '未设置' }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>年级：</strong></td>
+                                <td>{{ student.grade or '未设置' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>班级：</strong></td>
+                                <td>{{ student.class_name or '未设置' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>联系方式：</strong></td>
+                                <td>{{ student.contact or '未设置' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>邮箱：</strong></td>
+                                <td>{{ student.email or '未设置' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>账户状态：</strong></td>
+                                <td>
+                                    <span
+                                        class="badge bg-{{ 'success' if student.account_status == '正常' else 'danger' }}">
+                                        {{ student.account_status }}
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 借阅记录 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>借阅记录
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if borrow_records %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>图书</th>
+                                <th>借阅日期</th>
+                                <th>应还日期</th>
+                                <th>状态</th>
+                                <th>罚款</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in borrow_records %}
+                            <tr>
+                                <td>
+                                    <strong>{{ record.book.title }}</strong><br>
+                                    <small class="text-muted">{{ record.book.author }} | {{ record.book.isbn }}</small>
+                                </td>
+                                <td>{{ record.borrow_date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ record.due_date.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <span
+                                        class="badge bg-{{ 'success' if record.status == '借出' else 'info' if record.status == '已还' else 'danger' }}">
+                                        {{ record.status }}
+                                    </span>
+                                </td>
+                                <td>¥{{ "%.2f"|format(record.fine_amount) if record.fine_amount else '0.00' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">暂无借阅记录</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 罚款记录 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>罚款记录
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if fine_records %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>金额</th>
+                                <th>原因</th>
+                                <th>状态</th>
+                                <th>创建日期</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for fine in fine_records %}
+                            <tr>
+                                <td>¥{{ "%.2f"|format(fine.amount) }}</td>
+                                <td>{{ fine.reason }}</td>
+                                <td>
+                                    <span
+                                        class="badge bg-{{ 'danger' if fine.payment_status == '未缴纳' else 'success' if fine.payment_status == '已缴纳' else 'warning' }}">
+                                        {{ fine.payment_status }}
+                                    </span>
+                                </td>
+                                <td>{{ fine.created_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    {% if fine.payment_status != '已缴纳' %}
+                                    <button class="btn btn-success btn-sm"
+                                        onclick="updateFineStatus({{ fine.fine_id }}, '已缴纳')">
+                                        <i class="fas fa-check me-1"></i>标记已缴
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">暂无罚款记录</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 侧边栏 -->
+    <div class="col-lg-4">
+        <!-- 借阅统计 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>借阅统计
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h4 class="text-primary">{{ student.current_borrow_count }}</h4>
+                        <small class="text-muted">当前借阅</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success">{{ student.max_borrow_limit }}</h4>
+                        <small class="text-muted">借阅上限</small>
+                    </div>
+                </div>
+                <hr>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h4 class="text-warning">{{ borrow_records|length }}</h4>
+                        <small class="text-muted">总借阅次数</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-danger">{{ fine_records|selectattr('payment_status', 'equalto',
+                            '未缴纳')|list|length }}</h4>
+                        <small class="text-muted">未缴罚款</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 预约记录 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clock me-2"></i>预约记录
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if reservations %}
+                {% for reservation in reservations %}
+                <div class="border-bottom pb-2 mb-2">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>{{ reservation.book.title }}</strong><br>
+                            <small class="text-muted">{{ reservation.book.author }}</small>
+                        </div>
+                        <span
+                            class="badge bg-{{ 'warning' if reservation.status == '等待' else 'success' if reservation.status == '可取' else 'secondary' }}">
+                            {{ reservation.status }}
+                        </span>
+                    </div>
+                    <small class="text-muted">{{ reservation.reservation_date.strftime('%Y-%m-%d %H:%M') }}</small>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="text-muted text-center">暂无预约记录</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 评价记录 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-star me-2"></i>评价记录
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if reviews %}
+                {% for review in reviews %}
+                <div class="border-bottom pb-2 mb-2">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>{{ review.book.title }}</strong>
+                            <div class="mt-1">
+                                {% for i in range(5) %}
+                                <i class="fas fa-star text-{{ 'warning' if i < review.rating else 'muted' }}"></i>
+                                {% endfor %}
+                                <span class="ms-2">{{ review.rating }}/5</span>
+                            </div>
+                        </div>
+                        <small class="text-muted">{{ review.review_time.strftime('%Y-%m-%d') }}</small>
+                    </div>
+                    {% if review.comment %}
+                    <p class="mt-2 mb-0 small">{{ review.comment[:50] }}{% if review.comment|length > 50 %}...{% endif
+                        %}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="text-muted text-center">暂无评价记录</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleStudentStatus(studentId, currentStatus) {
+        var newStatus = currentStatus === '正常' ? '冻结' : '正常';
+        var action = currentStatus === '正常' ? '冻结' : '解冻';
+
+        if (confirm(`确定要${action}学生 ${studentId} 的账户吗？`)) {
+            fetch(`/admin/student/${studentId}/status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    status: newStatus
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`${action}成功！`);
+                        location.reload();
+                    } else {
+                        alert(`${action}失败：` + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(`${action}失败，请稍后重试`);
+                });
+        }
+    }
+
+    function updateFineStatus(fineId, newStatus) {
+        if (confirm('确定要更新罚款状态吗？')) {
+            fetch(`/admin/fine/${fineId}/status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    status: newStatus
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('状态更新成功！');
+                        location.reload();
+                    } else {
+                        alert('更新失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('更新失败，请稍后重试');
+                });
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,354 @@
+{% extends "base.html" %}
+
+{% block title %}学生中心 - 智能图书管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-user-graduate text-primary me-2"></i>学生中心
+        </h2>
+    </div>
+</div>
+
+<!-- 学生信息卡片 -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-id-card me-2"></i>个人信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <p><strong>学号：</strong>{{ student.student_id }}</p>
+                        <p><strong>姓名：</strong>{{ student.name }}</p>
+                        <p><strong>性别：</strong>{{ student.gender }}</p>
+                        <p><strong>院系：</strong>{{ student.department }}</p>
+                    </div>
+                    <div class="col-sm-6">
+                        <p><strong>专业：</strong>{{ student.major }}</p>
+                        <p><strong>年级：</strong>{{ student.grade }}</p>
+                        <p><strong>班级：</strong>{{ student.class_name }}</p>
+                        <p><strong>账户状态：</strong>
+                            <span class="badge bg-{{ 'success' if student.account_status == '正常' else 'danger' }}">
+                                {{ student.account_status }}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-book me-2"></i>借阅统计
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <h3 class="text-primary">{{ student.current_borrow_count }}</h3>
+                        <p class="text-muted">当前借阅</p>
+                    </div>
+                    <div class="col-4">
+                        <h3 class="text-success">{{ student.max_borrow_limit }}</h3>
+                        <p class="text-muted">最大借阅量</p>
+                    </div>
+                    <div class="col-4">
+                        <h3 class="text-info">{{ student.max_borrow_limit - student.current_borrow_count }}</h3>
+                        <p class="text-muted">剩余可借</p>
+                    </div>
+                </div>
+                <div class="progress mt-3">
+                    <div class="progress-bar" role="progressbar"
+                        style="width: {{ (student.current_borrow_count / student.max_borrow_limit) * 100 }}%">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 当前借阅 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bookmark me-2"></i>当前借阅
+                </h5>
+                <a href="{{ url_for('student_books') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-search me-1"></i>查找图书
+                </a>
+            </div>
+            <div class="card-body">
+                {% if current_borrows %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>图书信息</th>
+                                <th>借阅日期</th>
+                                <th>应还日期</th>
+                                <th>状态</th>
+                                <th>罚款</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for borrow in current_borrows %}
+                            <tr>
+                                <td>
+                                    <strong>{{ borrow.book.title }}</strong><br>
+                                    <small class="text-muted">{{ borrow.book.author }} | {{ borrow.book.isbn }}</small>
+                                </td>
+                                <td>{{ borrow.borrow_date.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <span class="{{ 'text-danger' if borrow.due_date < today else '' }}">
+                                        {{ borrow.due_date.strftime('%Y-%m-%d') }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if borrow.status == '借出' %}
+                                    <span class="badge bg-success">正常</span>
+                                    {% elif borrow.status == '逾期' %}
+                                    <span class="badge bg-danger">逾期</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if borrow.status == '逾期' %}
+                                    {% set fine = None %}
+                                    {% for f in fines if f.reason and borrow.isbn in f.reason %}
+                                    {% set fine = f %}
+                                    {% endfor %}
+                                    {% if fine %}
+                                    <span class="text-danger">¥{{ '%.2f'|format(fine.amount) }}</span>
+                                    {% else %}-{% endif %}
+                                    {% else %}-{% endif %}
+                                </td>
+                                <td>
+                                    {% if borrow.status == '借出' %}
+                                    <button class="btn btn-warning btn-sm" onclick="renewBook({{ borrow.borrow_id }})">
+                                        <i class="fas fa-sync-alt me-1"></i>续借
+                                    </button>
+                                    {% if borrow.isbn not in reviewed_isbns %}
+                                    <button class="btn btn-outline-primary btn-sm ms-1"
+                                        onclick="showReviewForm('{{ borrow.isbn }}', '{{ borrow.book.title }}')">
+                                        <i class="fas fa-star me-1"></i>评价
+                                    </button>
+                                    {% else %}
+                                    <span class="badge bg-secondary ms-1">已评价</span>
+                                    {% endif %}
+                                    {% elif borrow.status == '逾期' %}
+                                    <span class="badge bg-danger">逾期</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">暂无借阅记录</p>
+                    <a href="{{ url_for('student_books') }}" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>去借书
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 预约记录 -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clock me-2"></i>预约记录
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if reservations %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>图书信息</th>
+                                <th>预约日期</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reservation in reservations %}
+                            <tr>
+                                <td>
+                                    <strong>{{ reservation.book.title }}</strong><br>
+                                    <small class="text-muted">{{ reservation.book.author }} | {{ reservation.book.isbn
+                                        }}</small>
+                                </td>
+                                <td>{{ reservation.reservation_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    <span class="badge bg-warning">{{ reservation.status }}</span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-danger btn-sm"
+                                        onclick="cancelReservation({{ reservation.reservation_id }})">
+                                        <i class="fas fa-times me-1"></i>取消
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">暂无预约记录</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-end">
+        <a href="{{ url_for('student_history') }}" class="btn btn-outline-info me-2">
+            <i class="fas fa-history me-1"></i>借阅历史
+        </a>
+        <a href="{{ url_for('student_fines') }}" class="btn btn-outline-danger">
+            <i class="fas fa-yen-sign me-1"></i>罚款信息
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function renewBook(borrowId) {
+        if (confirm('确定要续借这本书吗？')) {
+            fetch(`/student/renew/${borrowId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    showToast(data.message, data.success);
+                    if (data.success) setTimeout(() => location.reload(), 1200);
+                });
+        }
+    }
+
+    function cancelReservation(reservationId) {
+        if (confirm('确定要取消这个预约吗？')) {
+            alert('取消预约功能待实现');
+        }
+    }
+
+    // 评价相关
+    let reviewIsbn = '';
+    function showReviewForm(isbn, title) {
+        reviewIsbn = isbn;
+        document.getElementById('reviewBookTitle').innerText = title;
+        var modal = new bootstrap.Modal(document.getElementById('reviewModal'));
+        modal.show();
+    }
+    function setRating(rating) {
+        window.reviewRating = rating;
+        for (let i = 1; i <= 5; i++) {
+            document.getElementById('star-' + i).classList.remove('text-warning');
+            document.getElementById('star-' + i).classList.add('text-muted');
+        }
+        for (let i = 1; i <= rating; i++) {
+            document.getElementById('star-' + i).classList.remove('text-muted');
+            document.getElementById('star-' + i).classList.add('text-warning');
+        }
+        document.getElementById('rating').value = rating;
+    }
+    function submitReview() {
+        const comment = document.getElementById('comment').value.trim();
+        if (!comment) {
+            showToast('请输入评价内容！', false);
+            return;
+        }
+        fetch(`/student/book/${reviewIsbn}/review`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rating: window.reviewRating || 5, comment: comment })
+        })
+            .then(response => response.json())
+            .then(data => {
+                showToast(data.message, data.success);
+                if (data.success) setTimeout(() => location.reload(), 1200);
+            });
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        setRating(5);
+    });
+    // Bootstrap Toast
+    function showToast(msg, success) {
+        const toastEl = document.getElementById('reviewToast');
+        document.getElementById('reviewToastBody').innerText = msg;
+        toastEl.classList.remove('bg-success', 'bg-danger');
+        toastEl.classList.add(success ? 'bg-success' : 'bg-danger');
+        var toast = new bootstrap.Toast(toastEl);
+        toast.show();
+    }
+</script>
+<!-- 评价模态框 -->
+<div class="modal fade" id="reviewModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">评价：<span id="reviewBookTitle"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reviewForm">
+                    <div class="mb-3">
+                        <label class="form-label">评分</label>
+                        <div class="rating">
+                            {% for i in range(5) %}
+                            <i class="fas fa-star fa-2x text-muted me-1" onclick="setRating({{ i + 1 }})"
+                                id="star-{{ i + 1 }}"></i>
+                            {% endfor %}
+                        </div>
+                        <input type="hidden" id="rating" name="rating" value="5">
+                    </div>
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">评价内容</label>
+                        <textarea class="form-control" id="comment" name="comment" rows="4" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="submitReview()">提交评价</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Toast 弹窗 -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
+    <div id="reviewToast" class="toast align-items-center text-white bg-success border-0" role="alert"
+        aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="reviewToastBody">评论提交成功！</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}统计报表 - 智能图书管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-chart-bar text-primary me-2"></i>统计报表
+        </h2>
+    </div>
+</div>
+
+<!-- 总体统计 -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ total_books }}</h4>
+                        <p class="card-text">总图书数</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-books fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ total_students }}</h4>
+                        <p class="card-text">注册学生</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-user-graduate fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ total_borrows }}</h4>
+                        <p class="card-text">当前借阅</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-bookmark fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ overdue_books }}</h4>
+                        <p class="card-text">逾期图书</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 图书分类统计 -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-pie-chart me-2"></i>图书分类统计
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if category_stats %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>分类</th>
+                                <th>图书数量</th>
+                                <th>占比</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for category in category_stats %}
+                            <tr>
+                                <td>{{ category.category_name }}</td>
+                                <td>{{ category.book_count }}</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar" role="progressbar"
+                                            style="width: {{ (category.book_count / total_books * 100)|round(1) }}%">
+                                            {{ (category.book_count / total_books * 100)|round(1) }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">暂无分类数据</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 院系借阅统计 -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bar-chart me-2"></i>院系借阅统计
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if dept_stats %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>院系</th>
+                                <th>借阅次数</th>
+                                <th>占比</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dept in dept_stats %}
+                            <tr>
+                                <td>{{ dept.department }}</td>
+                                <td>{{ dept.borrow_count }}</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-success" role="progressbar"
+                                            style="width: {{ (dept.borrow_count / all_borrow_count * 100)|round(1) if all_borrow_count > 0 else 0 }}%">
+                                            {{ (dept.borrow_count / all_borrow_count * 100)|round(1) if all_borrow_count
+                                            > 0 else 0 }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">暂无院系数据</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 热门图书排行 -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-fire me-2"></i>热门图书排行
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if popular_books %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>图书信息</th>
+                                <th>借阅次数</th>
+                                <th>热度</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for book in popular_books %}
+                            <tr>
+                                <td>
+                                    {% if loop.index == 1 %}
+                                    <span class="badge bg-warning">🥇</span>
+                                    {% elif loop.index == 2 %}
+                                    <span class="badge bg-secondary">🥈</span>
+                                    {% elif loop.index == 3 %}
+                                    <span class="badge bg-warning">🥉</span>
+                                    {% else %}
+                                    <span class="badge bg-light text-dark">{{ loop.index }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong>{{ book.title }}</strong><br>
+                                    <small class="text-muted">{{ book.author }} | {{ book.isbn }}</small>
+                                </td>
+                                <td>{{ book.borrow_count }}</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        {% set max_borrows = popular_books[0].borrow_count if popular_books else 1 %}
+                                        <div class="progress-bar bg-danger" role="progressbar"
+                                            style="width: {{ (book.borrow_count / max_borrows * 100)|round(1) }}%">
+                                            {{ (book.borrow_count / max_borrows * 100)|round(1) }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">暂无借阅数据</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 系统信息 -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-database me-2"></i>数据库信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>数据库类型</span>
+                        <span class="badge bg-primary">MySQL</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>数据库名称</span>
+                        <span>library_system</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>表数量</span>
+                        <span class="badge bg-info">11</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>触发器数量</span>
+                        <span class="badge bg-warning">4</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>存储过程数量</span>
+                        <span class="badge bg-success">3</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>视图数量</span>
+                        <span class="badge bg-secondary">5</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cogs me-2"></i>系统功能
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <h6 class="text-primary">自动化功能：</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>自动更新库存</li>
+                            <li><i class="fas fa-check text-success me-2"></i>自动计算罚款</li>
+                            <li><i class="fas fa-check text-success me-2"></i>自动冻结账户</li>
+                            <li><i class="fas fa-check text-success me-2"></i>自动发送提醒</li>
+                        </ul>
+                    </div>
+                    <div class="col-6">
+                        <h6 class="text-primary">管理功能：</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>图书信息管理</li>
+                            <li><i class="fas fa-check text-success me-2"></i>学生账户管理</li>
+                            <li><i class="fas fa-check text-success me-2"></i>借还书处理</li>
+                            <li><i class="fas fa-check text-success me-2"></i>统计报表</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

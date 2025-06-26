@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}编辑图书 - 智能图书管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-edit text-primary me-2"></i>编辑图书
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-edit me-2"></i>图书信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="editBookForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="isbn" class="form-label">
+                                    <i class="fas fa-barcode me-1"></i>ISBN <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="isbn" name="isbn" value="{{ book.isbn }}"
+                                    readonly>
+                                <div class="form-text">ISBN不可修改</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="title" class="form-label">
+                                    <i class="fas fa-book me-1"></i>书名 <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="title" name="title" value="{{ book.title }}"
+                                    required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="author" class="form-label">
+                                    <i class="fas fa-user me-1"></i>作者 <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="author" name="author"
+                                    value="{{ book.author }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="publisher" class="form-label">
+                                    <i class="fas fa-building me-1"></i>出版社 <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="publisher" name="publisher"
+                                    value="{{ book.publisher }}" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="publish_date" class="form-label">
+                                    <i class="fas fa-calendar me-1"></i>出版日期
+                                </label>
+                                <input type="date" class="form-control" id="publish_date" name="publish_date"
+                                    value="{{ book.publish_date.strftime('%Y-%m-%d') if book.publish_date else '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="price" class="form-label">
+                                    <i class="fas fa-yen-sign me-1"></i>价格
+                                </label>
+                                <input type="number" class="form-control" id="price" name="price" step="0.01" min="0"
+                                    value="{{ book.price if book.price else '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="category_code" class="form-label">
+                                    <i class="fas fa-tags me-1"></i>分类 <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" id="category_code" name="category_code" required>
+                                    <option value="">请选择分类</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.category_code }}" {{ 'selected' if
+                                        book.category_code==category.category_code else '' }}>
+                                        {{ category.category_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="location" class="form-label">
+                                    <i class="fas fa-map-marker-alt me-1"></i>馆藏位置
+                                </label>
+                                <input type="text" class="form-control" id="location" name="location"
+                                    value="{{ book.location or '' }}" placeholder="例如：A区-1层-CS001">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="total_copies" class="form-label">
+                                    <i class="fas fa-copy me-1"></i>总册数 <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" class="form-control" id="total_copies" name="total_copies"
+                                    value="{{ book.total_copies }}" required min="1">
+                                <div class="form-text">当前可借：{{ book.available_copies }}本</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">
+                                    <i class="fas fa-info-circle me-1"></i>图书状态
+                                </label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="正常" {{ 'selected' if book.status=='正常' else '' }}>正常</option>
+                                    <option value="遗失" {{ 'selected' if book.status=='遗失' else '' }}>遗失</option>
+                                    <option value="损坏" {{ 'selected' if book.status=='损坏' else '' }}>损坏</option>
+                                    <option value="下架" {{ 'selected' if book.status=='下架' else '' }}>下架</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="cover_url" class="form-label">
+                                    <i class="fas fa-image me-1"></i>封面图片URL
+                                </label>
+                                <input type="url" class="form-control" id="cover_url" name="cover_url"
+                                    value="{{ book.cover_url or '' }}" placeholder="https://example.com/cover.jpg">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">
+                            <i class="fas fa-align-left me-1"></i>图书简介
+                        </label>
+                        <textarea class="form-control" id="description" name="description" rows="4"
+                            placeholder="请输入图书简介...">{{ book.description or '' }}</textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin_book_detail', isbn=book.isbn) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>返回
+                        </a>
+                        <div>
+                            <button type="reset" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-redo me-2"></i>重置
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>保存
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>编辑说明
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        <strong>ISBN：</strong>不可修改，用于唯一标识
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        <strong>总册数：</strong>修改时会自动调整可借数量
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        <strong>图书状态：</strong>影响图书是否可借阅
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        <strong>分类：</strong>用于图书分类管理
+                    </li>
+                </ul>
+
+                <hr>
+
+                <h6 class="text-primary">注意事项：</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-1">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        带 <span class="text-danger">*</span> 的字段为必填项
+                    </li>
+                    <li class="mb-1">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        修改总册数会影响可借数量
+                    </li>
+                    <li class="mb-1">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        图书状态为"下架"时不可借阅
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 当前图书信息 -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-book me-2"></i>当前信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <td><strong>ISBN：</strong></td>
+                        <td>{{ book.isbn }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>书名：</strong></td>
+                        <td>{{ book.title }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>作者：</strong></td>
+                        <td>{{ book.author }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>分类：</strong></td>
+                        <td>{{ book.category.category_name if book.category else '未分类' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>状态：</strong></td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if book.status == '正常' else 'danger' }}">
+                                {{ book.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>库存：</strong></td>
+                        <td>{{ book.available_copies }}/{{ book.total_copies }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 表单验证
+    document.getElementById('editBookForm').addEventListener('submit', function (e) {
+        const totalCopies = parseInt(document.getElementById('total_copies').value);
+        const availableCopies = {{ book.available_copies }
+    };
+
+    if (totalCopies < availableCopies) {
+        e.preventDefault();
+        alert('总册数不能小于当前可借数量！');
+        return false;
+    }
+    });
+
+    // 总册数变化时更新提示
+    document.getElementById('total_copies').addEventListener('change', function () {
+        const totalCopies = parseInt(this.value);
+        const availableCopies = {{ book.available_copies }
+    };
+    const borrowedCopies = {{ book.total_copies - book.available_copies }};
+
+    if (totalCopies < availableCopies) {
+        this.setCustomValidity('总册数不能小于当前可借数量');
+    } else {
+        this.setCustomValidity('');
+    }
+
+    // 更新提示文本
+    const newAvailable = totalCopies - borrowedCopies;
+    this.nextElementSibling.textContent = `修改后可借：${Math.max(0, newAvailable)}本`;
+    });
+</script>
+{% endblock %}

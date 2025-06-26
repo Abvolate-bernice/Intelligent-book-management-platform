@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}添加图书 - 智能图书管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-plus text-primary me-2"></i>添加图书
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-edit me-2"></i>图书信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="addBookForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="isbn" class="form-label">
+                                    <i class="fas fa-barcode me-1"></i>ISBN <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="isbn" name="isbn" required
+                                    pattern="[0-9]{10}|[0-9]{13}" title="请输入10位或13位ISBN号码">
+                                <div class="form-text">请输入10位或13位ISBN号码</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="title" class="form-label">
+                                    <i class="fas fa-book me-1"></i>书名 <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="title" name="title" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="author" class="form-label">
+                                    <i class="fas fa-user me-1"></i>作者 <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="author" name="author" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="publisher" class="form-label">
+                                    <i class="fas fa-building me-1"></i>出版社 <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="publisher" name="publisher" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="publish_date" class="form-label">
+                                    <i class="fas fa-calendar me-1"></i>出版日期
+                                </label>
+                                <input type="date" class="form-control" id="publish_date" name="publish_date">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="price" class="form-label">
+                                    <i class="fas fa-yen-sign me-1"></i>价格
+                                </label>
+                                <input type="number" class="form-control" id="price" name="price" step="0.01" min="0">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="category_code" class="form-label">
+                                    <i class="fas fa-tags me-1"></i>分类 <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" id="category_code" name="category_code" required>
+                                    <option value="">请选择分类</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.category_code }}">
+                                        {{ category.category_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="location" class="form-label">
+                                    <i class="fas fa-map-marker-alt me-1"></i>馆藏位置
+                                </label>
+                                <input type="text" class="form-control" id="location" name="location"
+                                    placeholder="例如：A区-1层-CS001">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="total_copies" class="form-label">
+                                    <i class="fas fa-copy me-1"></i>总册数 <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" class="form-control" id="total_copies" name="total_copies" required
+                                    min="1" value="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">
+                            <i class="fas fa-align-left me-1"></i>图书简介
+                        </label>
+                        <textarea class="form-control" id="description" name="description" rows="4"
+                            placeholder="请输入图书简介..."></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin_books') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>返回
+                        </a>
+                        <div>
+                            <button type="reset" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-redo me-2"></i>重置
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>保存
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>填写说明
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        <strong>ISBN：</strong>必须为10位或13位数字
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        <strong>书名：</strong>请输入完整的书名
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        <strong>作者：</strong>可以是多个作者，用逗号分隔
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        <strong>分类：</strong>选择合适的图书分类
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        <strong>总册数：</strong>至少为1册
+                    </li>
+                </ul>
+
+                <hr>
+
+                <h6 class="text-primary">注意事项：</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-1">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        带 <span class="text-danger">*</span> 的字段为必填项
+                    </li>
+                    <li class="mb-1">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        ISBN不能重复
+                    </li>
+                    <li class="mb-1">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        添加后图书状态默认为"正常"
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('addBookForm').addEventListener('submit', function (e) {
+        // 表单验证
+        var isbn = document.getElementById('isbn').value;
+        var title = document.getElementById('title').value;
+        var author = document.getElementById('author').value;
+        var publisher = document.getElementById('publisher').value;
+        var category = document.getElementById('category_code').value;
+        var totalCopies = document.getElementById('total_copies').value;
+
+        if (!isbn || !title || !author || !publisher || !category || !totalCopies) {
+            e.preventDefault();
+            alert('请填写所有必填字段！');
+            return false;
+        }
+
+        // ISBN格式验证
+        var isbnPattern = /^[0-9]{10}|[0-9]{13}$/;
+        if (!isbnPattern.test(isbn)) {
+            e.preventDefault();
+            alert('ISBN格式不正确！请输入10位或13位数字。');
+            return false;
+        }
+
+        // 总册数验证
+        if (parseInt(totalCopies) < 1) {
+            e.preventDefault();
+            alert('总册数必须大于0！');
+            return false;
+        }
+    });
+
+    // 实时验证ISBN格式
+    document.getElementById('isbn').addEventListener('input', function () {
+        var isbn = this.value;
+        var isbnPattern = /^[0-9]{10}|[0-9]{13}$/;
+
+        if (isbn && !isbnPattern.test(isbn)) {
+            this.classList.add('is-invalid');
+        } else {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+        }
+    });
+</script>
+{% endblock %}

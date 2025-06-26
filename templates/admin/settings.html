@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}系统参数设置 - 智能图书管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-cogs text-primary me-2"></i>系统参数设置
+        </h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-sliders-h me-2"></i>参数列表
+                </h5>
+            </div>
+            <form method="post">
+                <div class="card-body">
+                    {% for param in params %}
+                    <div class="mb-3 row align-items-center">
+                        <label class="col-sm-3 col-form-label">{{ param.label }}</label>
+                        <div class="col-sm-5">
+                            <input type="{{ param.type }}" class="form-control" name="{{ param.key }}"
+                                value="{{ param.value }}" {% if param.step %}step="{{ param.step }}" {% endif %}
+                                required>
+                        </div>
+                        <div class="col-sm-4 text-muted small">{{ param.description }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="card-footer text-end">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>保存设置</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

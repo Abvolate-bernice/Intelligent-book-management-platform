@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}借阅历史 - 智能图书管理系统{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4"><i class="fas fa-history text-info me-2"></i>借阅历史</h2>
+        <a href="{{ url_for('student_dashboard') }}" class="btn btn-outline-secondary mb-3">
+            <i class="fas fa-arrow-left me-1"></i>返回学生中心
+        </a>
+        <div class="card">
+            <div class="card-body">
+                {% if history %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>图书信息</th>
+                                <th>借阅日期</th>
+                                <th>应还日期</th>
+                                <th>归还日期</th>
+                                <th>状态</th>
+                                <th>罚款</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in history %}
+                            <tr>
+                                <td>
+                                    <strong>{{ record.book.title }}</strong><br>
+                                    <small class="text-muted">{{ record.book.author }} | {{ record.book.isbn }}</small>
+                                </td>
+                                <td>{{ record.borrow_date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ record.due_date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ record.return_date.strftime('%Y-%m-%d') if record.return_date else '-' }}</td>
+                                <td>
+                                    <span
+                                        class="badge bg-{{ 'success' if record.status == '已还' else ('danger' if record.status in ['逾期','遗失'] else 'primary') }}">
+                                        {{ record.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if record.fine_amount and record.fine_amount > 0 %}
+                                    <span class="text-danger">¥{{ '%.2f'|format(record.fine_amount) }}</span>
+                                    {% elif record.status == '逾期' %}
+                                    {% set overdue_days = (today - record.due_date).days %}
+                                    {% if overdue_days > 0 %}
+                                    <span class="text-danger">¥{{ '%.2f'|format(overdue_days * 1.0) }}</span>
+                                    {% else %}-{% endif %}
+                                    {% else %}-{% endif %}
+                                </td>
+                                <td>
+                                    {% if record.status in ['已还', '逾期', '遗失'] %}
+                                    {% if record.isbn in reviewed_isbns %}
+                                    <span class="badge bg-secondary">已评价</span>
+                                    {% else %}
+                                    <button class="btn btn-outline-primary btn-sm"
+                                        onclick="showReviewForm('{{ record.isbn }}', '{{ record.book.title }}')">
+                                        <i class="fas fa-star me-1"></i>评价
+                                    </button>
+                                    {% endif %}
+                                    {% else %}-{% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">暂无借阅历史</h5>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    let reviewIsbn = '';
+    function showReviewForm(isbn, title) {
+        reviewIsbn = isbn;
+        document.getElementById('reviewBookTitle').innerText = title;
+        var modal = new bootstrap.Modal(document.getElementById('reviewModal'));
+        modal.show();
+    }
+    function setRating(rating) {
+        window.reviewRating = rating;
+        for (let i = 1; i <= 5; i++) {
+            document.getElementById('star-' + i).classList.remove('text-warning');
+            document.getElementById('star-' + i).classList.add('text-muted');
+        }
+        for (let i = 1; i <= rating; i++) {
+            document.getElementById('star-' + i).classList.remove('text-muted');
+            document.getElementById('star-' + i).classList.add('text-warning');
+        }
+        document.getElementById('rating').value = rating;
+    }
+    function submitReview() {
+        const comment = document.getElementById('comment').value.trim();
+        if (!comment) {
+            showToast('请输入评价内容！', false);
+            return;
+        }
+        fetch(`/student/book/${reviewIsbn}/review`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rating: window.reviewRating || 5, comment: comment })
+        })
+            .then(response => response.json())
+            .then(data => {
+                showToast(data.message, data.success);
+                if (data.success) setTimeout(() => location.reload(), 1200);
+            });
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        setRating(5);
+    });
+    // Bootstrap Toast
+    function showToast(msg, success) {
+        const toastEl = document.getElementById('reviewToast');
+        document.getElementById('reviewToastBody').innerText = msg;
+        toastEl.classList.remove('bg-success', 'bg-danger');
+        toastEl.classList.add(success ? 'bg-success' : 'bg-danger');
+        var toast = new bootstrap.Toast(toastEl);
+        toast.show();
+    }
+</script>
+<!-- 评价模态框 -->
+<div class="modal fade" id="reviewModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">评价：<span id="reviewBookTitle"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reviewForm">
+                    <div class="mb-3">
+                        <label class="form-label">评分</label>
+                        <div class="rating">
+                            {% for i in range(5) %}
+                            <i class="fas fa-star fa-2x text-muted me-1" onclick="setRating({{ i + 1 }})"
+                                id="star-{{ i + 1 }}"></i>
+                            {% endfor %}
+                        </div>
+                        <input type="hidden" id="rating" name="rating" value="5">
+                    </div>
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">评价内容</label>
+                        <textarea class="form-control" id="comment" name="comment" rows="4" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="submitReview()">提交评价</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Toast 弹窗 -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
+    <div id="reviewToast" class="toast align-items-center text-white bg-success border-0" role="alert"
+        aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="reviewToastBody">评论提交成功！</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+{% endblock %}

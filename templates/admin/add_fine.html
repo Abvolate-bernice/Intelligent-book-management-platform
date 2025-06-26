@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}添加罚款 - 智能图书管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-plus text-primary me-2"></i>添加罚款
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-edit me-2"></i>罚款信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="addFineForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="student_id" class="form-label">
+                                    <i class="fas fa-user me-1"></i>学生 <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" id="student_id" name="student_id" required>
+                                    <option value="">请选择学生</option>
+                                    {% for student in students %}
+                                    <option value="{{ student.student_id }}">
+                                        {{ student.name }} ({{ student.student_id }}) - {{ student.department }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="amount" class="form-label">
+                                    <i class="fas fa-yen-sign me-1"></i>罚款金额 <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0"
+                                    required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">
+                            <i class="fas fa-exclamation-triangle me-1"></i>罚款原因
+                        </label>
+                        <textarea class="form-control" id="reason" name="reason" rows="4"
+                            placeholder="请输入罚款原因，例如：图书逾期归还、图书损坏等..."></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin_fines') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>返回
+                        </a>
+                        <div>
+                            <button type="reset" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-redo me-2"></i>重置
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>保存
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>填写说明
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        <strong>学生：</strong>选择需要罚款的学生
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        <strong>金额：</strong>输入罚款金额，支持小数
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        <strong>原因：</strong>详细说明罚款原因
+                    </li>
+                </ul>
+
+                <hr>
+
+                <h6 class="text-primary">常见罚款原因：</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-1">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        图书逾期归还
+                    </li>
+                    <li class="mb-1">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        图书损坏或遗失
+                    </li>
+                    <li class="mb-1">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        违反图书馆规定
+                    </li>
+                    <li class="mb-1">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        其他违规行为
+                    </li>
+                </ul>
+
+                <hr>
+
+                <h6 class="text-primary">注意事项：</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-1">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        带 <span class="text-danger">*</span> 的字段为必填项
+                    </li>
+                    <li class="mb-1">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        罚款金额不能为负数
+                    </li>
+                    <li class="mb-1">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        添加后学生需要及时缴纳罚款
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 学生信息预览 -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-user me-2"></i>学生信息预览
+                </h5>
+            </div>
+            <div class="card-body" id="studentInfo">
+                <p class="text-muted text-center">请选择学生查看详细信息</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 学生选择变化时更新预览信息
+    document.getElementById('student_id').addEventListener('change', function () {
+        const studentId = this.value;
+        const studentInfo = document.getElementById('studentInfo');
+
+        if (studentId) {
+            // 这里可以通过AJAX获取学生详细信息
+            // 为了简化，我们直接显示选中的学生ID
+            studentInfo.innerHTML = `
+                <div class="text-center">
+                    <i class="fas fa-user fa-2x text-primary mb-2"></i>
+                    <h6>学生ID: ${studentId}</h6>
+                    <p class="text-muted">详细信息加载中...</p>
+                </div>
+            `;
+        } else {
+            studentInfo.innerHTML = '<p class="text-muted text-center">请选择学生查看详细信息</p>';
+        }
+    });
+
+    // 表单验证
+    document.getElementById('addFineForm').addEventListener('submit', function (e) {
+        const amount = parseFloat(document.getElementById('amount').value);
+        const studentId = document.getElementById('student_id').value;
+
+        if (!studentId) {
+            e.preventDefault();
+            alert('请选择学生！');
+            return false;
+        }
+
+        if (amount <= 0) {
+            e.preventDefault();
+            alert('罚款金额必须大于0！');
+            return false;
+        }
+    });
+</script>
+{% endblock %}

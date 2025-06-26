@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}管理面板 - 智能图书管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-tachometer-alt text-primary me-2"></i>管理面板
+        </h2>
+    </div>
+</div>
+
+<!-- 统计卡片 -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ total_books }}</h4>
+                        <p class="card-text">总图书数</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-books fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ total_students }}</h4>
+                        <p class="card-text">注册学生</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-user-graduate fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ total_borrows }}</h4>
+                        <p class="card-text">当前借阅</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-bookmark fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ overdue_books }}</h4>
+                        <p class="card-text">逾期图书</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 快速操作 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>快速操作
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin_add_book') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-plus me-2"></i>添加图书
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin_books') }}" class="btn btn-info w-100">
+                            <i class="fas fa-books me-2"></i>图书管理
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin_students') }}" class="btn btn-success w-100">
+                            <i class="fas fa-users me-2"></i>学生管理
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin_borrows') }}" class="btn btn-warning w-100">
+                            <i class="fas fa-exchange-alt me-2"></i>借阅管理
+                        </a>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin_reservations') }}" class="btn btn-secondary w-100">
+                            <i class="fas fa-clock me-2"></i>预约管理
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin_reviews') }}" class="btn btn-warning w-100">
+                            <i class="fas fa-star me-2"></i>评价管理
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin_fines') }}" class="btn btn-danger w-100">
+                            <i class="fas fa-exclamation-triangle me-2"></i>罚款管理
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin_categories') }}" class="btn btn-info w-100">
+                            <i class="fas fa-tags me-2"></i>分类管理
+                        </a>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin_reports') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-chart-bar me-2"></i>统计报表
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin_logs') }}" class="btn btn-dark w-100">
+                            <i class="fas fa-history me-2"></i>系统日志
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 系统信息 -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-database me-2"></i>数据库信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>数据库类型</span>
+                        <span class="badge bg-primary">MySQL</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>数据库名称</span>
+                        <span>library_system</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>表数量</span>
+                        <span class="badge bg-info">11</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>触发器数量</span>
+                        <span class="badge bg-warning">4</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>存储过程数量</span>
+                        <span class="badge bg-success">3</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>视图数量</span>
+                        <span class="badge bg-secondary">5</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cogs me-2"></i>系统功能
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <h6 class="text-primary">自动化功能：</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>自动更新库存</li>
+                            <li><i class="fas fa-check text-success me-2"></i>自动计算罚款</li>
+                            <li><i class="fas fa-check text-success me-2"></i>自动冻结账户</li>
+                            <li><i class="fas fa-check text-success me-2"></i>自动发送提醒</li>
+                        </ul>
+                    </div>
+                    <div class="col-6">
+                        <h6 class="text-primary">管理功能：</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>图书信息管理</li>
+                            <li><i class="fas fa-check text-success me-2"></i>学生账户管理</li>
+                            <li><i class="fas fa-check text-success me-2"></i>借还书处理</li>
+                            <li><i class="fas fa-check text-success me-2"></i>统计报表</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 最近活动 -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>系统特色
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-bolt fa-3x text-warning mb-3"></i>
+                            <h5>触发器自动化</h5>
+                            <p class="text-muted">借阅时自动更新库存，归还时自动计算罚款，确保数据一致性</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-eye fa-3x text-info mb-3"></i>
+                            <h5>智能视图</h5>
+                            <p class="text-muted">热门图书排行、院系借阅统计、逾期监控等多维度数据分析</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-cogs fa-3x text-success mb-3"></i>
+                            <h5>存储过程</h5>
+                            <p class="text-muted">批量处理、报表生成、自动提醒等高效业务处理流程</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

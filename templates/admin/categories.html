@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}分类管理 - 智能图书管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-tags text-primary me-2"></i>分类管理
+            </h2>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                <i class="fas fa-plus me-1"></i>添加分类
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>图书分类
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if categories %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-sortable">
+                        <thead>
+                            <tr>
+                                <th data-sort="category_code">分类代码</th>
+                                <th data-sort="category_name">分类名称</th>
+                                <th data-sort="category_description">描述</th>
+                                <th data-sort="book_count">图书数量</th>
+                                <th data-sort="created_at">创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for category in categories %}
+                            <tr>
+                                <td data-category_code="{{ category.category_code }}">
+                                    <span class="badge bg-primary">{{ category.category_code }}</span>
+                                </td>
+                                <td data-category_name="{{ category.category_name }}">
+                                    <strong>{{ category.category_name }}</strong>
+                                </td>
+                                <td data-category_description="{{ category.category_description }}">
+                                    {{ category.category_description or '暂无描述' }}
+                                </td>
+                                <td data-book_count="{{ category.books|length }}">
+                                    <span class="badge bg-info">{{ category.books|length }}</span>
+                                </td>
+                                <td data-created_at="{{ category.created_at.strftime('%Y-%m-%d') }}">
+                                    {{ category.created_at.strftime('%Y-%m-%d') }}
+                                </td>
+                                <td>
+                                    <button class="btn btn-outline-primary btn-sm"
+                                        onclick="viewCategory('{{ category.category_code }}')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-outline-warning btn-sm"
+                                        onclick="editCategory('{{ category.category_code }}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    {% if category.books|length == 0 %}
+                                    <button class="btn btn-outline-danger btn-sm"
+                                        onclick="deleteCategory('{{ category.category_code }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% else %}
+                                    <button class="btn btn-outline-secondary btn-sm" disabled title="该分类下还有图书，无法删除">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">暂无分类数据</h5>
+                    <p class="text-muted">点击上方"添加分类"按钮开始添加</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 统计信息 -->
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ categories|length }}</h4>
+                        <p class="card-text">总分类数</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-tags fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{
+                            categories|selectattr('books')|map(attribute='books')|map('length')|sum }}</h4>
+                        <p class="card-text">已分类图书</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-books fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{
+                            categories|selectattr('books')|map(attribute='books')|map('length')|max if categories else 0
+                            }}</h4>
+                        <p class="card-text">最大分类图书数</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chart-bar fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加分类模态框 -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="addCategoryForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加图书分类</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="category_code" class="form-label">分类代码 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="category_code" name="category_code" required
+                            pattern="[A-Z0-9]{2,10}" title="请输入2-10位大写字母和数字的组合">
+                        <div class="form-text">请输入2-10位大写字母和数字的组合，如：CS001</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="category_name" class="form-label">分类名称 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="category_name" name="category_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="category_description" class="form-label">分类描述</label>
+                        <textarea class="form-control" id="category_description" name="category_description" rows="3"
+                            placeholder="请输入分类描述..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 添加分类
+    document.getElementById('addCategoryForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+
+        fetch('/admin/category/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(data)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('分类添加成功！');
+                    location.reload();
+                } else {
+                    alert('添加失败：' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('添加失败，请稍后重试');
+            });
+    });
+
+    function viewCategory(categoryCode) {
+        // 查看分类详情
+        alert('分类详情功能开发中...');
+    }
+
+    function editCategory(categoryCode) {
+        // 编辑分类
+        alert('编辑分类功能开发中...');
+    }
+
+    function deleteCategory(categoryCode) {
+        if (confirm('确定要删除这个分类吗？此操作不可恢复！')) {
+            fetch(`/admin/category/${categoryCode}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('删除成功！');
+                        location.reload();
+                    } else {
+                        alert('删除失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('删除失败，请稍后重试');
+                });
+        }
+    }
+</script>
+{% endblock %}

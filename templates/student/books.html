@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}图书查询 - 智能图书管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-search text-primary me-2"></i>图书查询
+        </h2>
+    </div>
+</div>
+
+<!-- 搜索表单 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="search" class="form-label">
+                            <i class="fas fa-search me-1"></i>搜索关键词
+                        </label>
+                        <input type="text" class="form-control" id="search" name="search"
+                            value="{{ request.args.get('search', '') }}" placeholder="书名、作者、ISBN">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="category" class="form-label">
+                            <i class="fas fa-tags me-1"></i>图书分类
+                        </label>
+                        <select class="form-select" id="category" name="category">
+                            <option value="">全部分类</option>
+                            {% for category in categories %}
+                            <option value="{{ category.category_code }}" {{ 'selected' if
+                                request.args.get('category')==category.category_code }}>
+                                {{ category.category_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i>搜索
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <a href="{{ url_for('student_books') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-redo me-1"></i>重置
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 图书列表 -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-books me-2"></i>图书列表
+                    <span class="badge bg-primary ms-2">{{ books|length }} 本</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if books %}
+                <div class="row">
+                    {% for book in books %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ book.title }}</h5>
+                                <p class="card-text text-muted">
+                                    <i class="fas fa-user me-1"></i>{{ book.author }}
+                                </p>
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-barcode me-1"></i>{{ book.isbn }}<br>
+                                        <i class="fas fa-building me-1"></i>{{ book.publisher }}<br>
+                                        <i class="fas fa-map-marker-alt me-1"></i>{{ book.location }}
+                                    </small>
+                                </p>
+
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="badge bg-info">{{ book.category.category_name }}</span>
+                                    <span class="badge bg-{{ 'success' if book.available_copies > 0 else 'danger' }}">
+                                        {{ '可借' if book.available_copies > 0 else '无库存' }}
+                                    </span>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        库存: {{ book.available_copies }}/{{ book.total_copies }}
+                                    </small>
+                                    <div>
+                                        <a href="{{ url_for('student_book_detail', isbn=book.isbn) }}"
+                                            class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye me-1"></i>详情
+                                        </a>
+                                        {% if book.available_copies > 0 %}
+                                        <button class="btn btn-success btn-sm" onclick="borrowBook('{{ book.isbn }}')">
+                                            <i class="fas fa-book me-1"></i>借阅
+                                        </button>
+                                        {% else %}
+                                        <button class="btn btn-warning btn-sm" onclick="reserveBook('{{ book.isbn }}')">
+                                            <i class="fas fa-clock me-1"></i>预约
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">未找到相关图书</h5>
+                    <p class="text-muted">请尝试使用其他搜索条件</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function borrowBook(isbn) {
+        if (confirm('确定要借阅这本书吗？')) {
+            fetch(`/student/borrow/${isbn}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert('借阅失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('借阅失败，请稍后重试');
+                });
+        }
+    }
+
+    function reserveBook(isbn) {
+        if (confirm('确定要预约这本书吗？')) {
+            fetch(`/student/reserve/${isbn}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert('预约失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('预约失败，请稍后重试');
+                });
+        }
+    }
+</script>
+{% endblock %}

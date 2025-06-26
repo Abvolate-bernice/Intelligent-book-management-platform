@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}学生管理 - 智能图书管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-users text-primary me-2"></i>学生管理
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>学生列表
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if students %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-sortable">
+                        <thead>
+                            <tr>
+                                <th data-sort="student_id">学号</th>
+                                <th data-sort="name">姓名</th>
+                                <th data-sort="department">院系</th>
+                                <th data-sort="major">专业</th>
+                                <th data-sort="grade">年级</th>
+                                <th data-sort="status">账户状态</th>
+                                <th data-sort="borrow_count">借阅情况</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr>
+                                <td data-student_id="{{ student.student_id }}">{{ student.student_id }}</td>
+                                <td data-name="{{ student.name }}">{{ student.name }}</td>
+                                <td data-department="{{ student.department }}">{{ student.department }}</td>
+                                <td data-major="{{ student.major }}">{{ student.major }}</td>
+                                <td data-grade="{{ student.grade }}">{{ student.grade }}</td>
+                                <td data-status="{{ student.account_status }}">
+                                    <span
+                                        class="badge bg-{{ 'success' if student.account_status == '正常' else 'danger' }}">
+                                        {{ student.account_status }}
+                                    </span>
+                                </td>
+                                <td
+                                    data-borrow_count="{{ student.current_borrow_count }}/{{ student.max_borrow_limit }}">
+                                    {{ student.current_borrow_count }}/{{ student.max_borrow_limit }}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-outline-primary btn-sm"
+                                            onclick="viewStudent('{{ student.student_id }}')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-outline-warning btn-sm"
+                                            onclick="editStudent('{{ student.student_id }}')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button
+                                            class="btn btn-outline-{{ 'success' if student.account_status == '冻结' else 'danger' }} btn-sm"
+                                            onclick="toggleStudentStatus('{{ student.student_id }}', '{{ student.account_status }}')">
+                                            <i
+                                                class="fas fa-{{ 'unlock' if student.account_status == '冻结' else 'lock' }}"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">暂无学生数据</h5>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function viewStudent(studentId) {
+        // 查看学生详情
+        window.open(`/admin/student/${studentId}`, '_blank');
+    }
+
+    function editStudent(studentId) {
+        // 编辑学生信息
+        window.location.href = `/admin/student/${studentId}/edit`;
+    }
+
+    function toggleStudentStatus(studentId, currentStatus) {
+        var newStatus = currentStatus === '正常' ? '冻结' : '正常';
+        var action = currentStatus === '正常' ? '冻结' : '解冻';
+
+        if (confirm(`确定要${action}学生 ${studentId} 的账户吗？`)) {
+            fetch(`/admin/student/${studentId}/status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    status: newStatus
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`${action}成功！`);
+                        location.reload();
+                    } else {
+                        alert(`${action}失败：` + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(`${action}失败，请稍后重试`);
+                });
+        }
+    }
+</script>
+{% endblock %}

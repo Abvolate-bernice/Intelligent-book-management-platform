@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}图书管理 - 智能图书管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-books text-primary me-2"></i>图书管理
+            </h2>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <a href="{{ url_for('admin_add_book') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>添加图书
+                </a>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#importModal">
+                    <i class="fas fa-file-import me-1"></i>批量导入
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>图书列表
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if books %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-sortable">
+                        <thead>
+                            <tr>
+                                <th data-sort="isbn">ISBN</th>
+                                <th data-sort="title">书名</th>
+                                <th data-sort="author">作者</th>
+                                <th data-sort="publisher">出版社</th>
+                                <th data-sort="category">分类</th>
+                                <th data-sort="copies">库存</th>
+                                <th data-sort="status">状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for book in books %}
+                            <tr>
+                                <td data-isbn="{{ book.isbn }}">{{ book.isbn }}</td>
+                                <td data-title="{{ book.title }}">{{ book.title }}</td>
+                                <td data-author="{{ book.author }}">{{ book.author }}</td>
+                                <td data-publisher="{{ book.publisher }}">{{ book.publisher }}</td>
+                                <td data-category="{{ book.category.category_name }}">{{ book.category.category_name }}
+                                </td>
+                                <td data-copies="{{ book.available_copies }}/{{ book.total_copies }}">
+                                    {{ book.available_copies }}/{{ book.total_copies }}
+                                </td>
+                                <td data-status="{{ book.status }}">
+                                    <span class="badge bg-{{ 'success' if book.status == '正常' else 'danger' }}">
+                                        {{ book.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-outline-primary btn-sm"
+                                            onclick="viewBook('{{ book.isbn }}')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-outline-warning btn-sm"
+                                            onclick="editBook('{{ book.isbn }}')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-sm"
+                                            onclick="deleteBook('{{ book.isbn }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-books fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">暂无图书数据</h5>
+                    <p class="text-muted">点击上方"添加图书"按钮开始添加</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 批量导入模态框 -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('admin_import_books') }}" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title">批量导入图书（CSV）</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="csvFile" class="form-label">选择CSV文件</label>
+                        <input type="file" class="form-control" id="csvFile" name="csv_file" accept=".csv" required>
+                        <div class="form-text">请上传UTF-8编码、首行为字段名的CSV文件。</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-success">导入</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function viewBook(isbn) {
+        // 查看图书详情
+        window.open(`/admin/book/${isbn}`, '_blank');
+    }
+
+    function editBook(isbn) {
+        // 编辑图书
+        window.location.href = `/admin/book/${isbn}/edit`;
+    }
+
+    function deleteBook(isbn) {
+        if (confirm('确定要删除这本书吗？此操作不可恢复！')) {
+            fetch(`/admin/book/${isbn}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('删除成功！');
+                        location.reload();
+                    } else {
+                        alert('删除失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('删除失败，请稍后重试');
+                });
+        }
+    }
+</script>
+{% endblock %}
